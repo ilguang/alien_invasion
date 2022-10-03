@@ -22,19 +22,28 @@ class AlenInvasion:
         """开始游戏的主循环"""
         while True :
             #监事键盘和鼠标事件
-            for event in pygame.event.get():
-                #触发QUIT事件退出游戏
-                if event.type == pygame.QUIT :
-                    sys.exit()
+            self._check_events()
 
-            # 每次循环时重绘屏幕
-            self.screen.fill(self.settings.bg_color)
-            
-            #在窗口显示飞船
-            self.ship
+            # # 每次循环时重绘屏幕
+            self._undate_screen()
 
             #让最近绘制的屏幕可见
             pygame.display.flip()
+
+    """重构事件监视和屏幕更新的代码"""
+    def _check_events(self):
+        """响应按键和鼠标事件"""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+    
+    def _undate_screen(self):
+        """更新屏幕上的图像，并切换到更新屏幕"""
+        # 每次循环时重绘屏幕
+        self.screen.fill(self.settings.bg_color)
+        #在窗口显示飞船
+        self.ship.blitme()
+
 
 if __name__ == '__main__' :
     #创建游戏实例并运行游戏。
