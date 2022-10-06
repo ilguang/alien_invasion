@@ -22,6 +22,10 @@ class Ship:
         self.moving_right = False
         self.moving_left = False
 
+    def center_ship(self):
+        """飞船在屏幕低端居中"""
+        self.rect.midbottom = self.screen_rect.midbottom
+        self.x = float(self.rect.x)
     
     def update(self):
         """"根据移动标志调整飞船位置"""

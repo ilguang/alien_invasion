@@ -11,9 +11,15 @@ class Bullet(Sprite):
         self.color = ai_game.settings.bullet_color
 
         #在（0,0）处创建一个表示子弹的矩形，再设置正确的位置。
-        self.rect = pygame.Rect(0,0,self.settings.bullet_width,self.settings.bullet_height)
+        self.rect = pygame.Rect(
+            0,0,self.settings.bullet_width,
+            self.settings.bullet_height
+        )
+        #弹尾火焰
+        self.rect_w = pygame.Rect(0,0,self.settings.bullet_width,
+        self.settings.bullet_height / 3)
+        #子弹从飞船头发射
         self.rect.midtop = ai_game.ship.rect.midtop
-
         #在存储用小数表示的子弹位置。
         self.y = float(self.rect.y)
 
@@ -27,6 +33,12 @@ class Bullet(Sprite):
     def draw_bullet(self):
         """在屏幕上绘制子弹"""
         pygame.draw.rect(self.screen, self.color, self.rect)
+        #使弹尾火焰跟随子弹移动
+        self.rect_w.x = self.rect.x
+        self.rect_w.y = self.rect.y + self.rect.height
+        #绘制弹尾火焰
+        pygame.draw.rect(self.screen, (250,129,32), self.rect_w)
+
             
 
         
