@@ -4,6 +4,8 @@ from turtle import Screen
 import pygame
 from settings import Settings
 from game_stats import GameStats
+from scoreboard import Scoreboard
+from button import Button 
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
@@ -15,25 +17,36 @@ class AlenInvasion:
         pygame.init()
         #设置类
         self.settings = Settings()
+
         #设置game窗口大小
         self.screen = pygame.display.set_mode(
             (self.settings.screen_width, 
             self.settings.screen_height),
             pygame.RESIZABLE
         )
+
         #设置game窗口标题
         pygame.display.set_caption("Alien Invasion")
+
         #创建一个用于存储游戏统计信息的实例
         self.stats = GameStats(self)
+
+        #创建存储游戏统计信息的实例
+        self.sb = Scoreboard(self)
+
         #创建一搜飞船
         self.ship = Ship(self)
+
         #创建一个存储子弹的编组
         self.bullets = pygame.sprite.Group()
+
         #创建一个存储外星人的编组
         self.aliens = pygame.sprite.Group()
 
         self._create_fleet()
 
+        #创建play按钮
+        self.play_button = Button(self,"Play")
     
     
     def _create_fleet(self):
@@ -101,7 +114,7 @@ class AlenInvasion:
                 self._update_aliens()
 
             #每次循环时重绘屏幕
-            self._undate_screen()
+            self._update_screen()
 
 
     """重构事件监视和屏幕更新的代码"""
@@ -115,6 +128,10 @@ class AlenInvasion:
 
             elif event.type == pygame.KEYUP:        #触发按键 松开 事件
                 self._check_keyup_events(event)     #处理键盘按键松开事件
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()  #获取鼠标点击位置的元组(x,y)
+                self._check_play_button(mouse_pos)
 
     def _check_keydown_events(self,event):
         """响应键盘按键按下"""
@@ -137,6 +154,28 @@ class AlenInvasion:
 
         if event.key == pygame.K_LEFT or event.key == pygame.K_a:      #触发飞船左移按键(K_LEFT or K_a)松开事件
             self.ship.moving_left = False                              #将左移标志置为 False
+
+    def _check_play_button(self,mouse_pos):
+        """在玩家单击play按钮时开始游戏"""
+        button_clicked = self.play_button.rect.collidepoint(mouse_pos)
+        if button_clicked and not self.stats.game_active:
+            #重置游戏设置
+            self.settings.initialize_dynamic_settings()
+
+            self.stats.reset_stats()
+            self.stats.game_active = True
+            self.sb.prep_score()    #重置得分
+
+            #清空余下的外星人和子弹
+            self.aliens.empty()
+            self.bullets.empty()
+
+            #创建一群新的外星人并让飞船居中
+            self._create_fleet()
+            self.ship.center_ship()
+
+            #隐藏鼠标光标
+            pygame.mouse.set_visible(False)
 
     def _fire_bullet(self):
         """创建一颗子弹，并将其加入编组 bullets 中"""
@@ -163,12 +202,18 @@ class AlenInvasion:
         collisions = pygame.sprite.groupcollide(
             self.bullets,self.aliens,True,True
         )
+
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points * len(aliens)
+        self.sb.prep_score()
+
         #判断外星人是否全部消灭
         if not self.aliens:
             #删除现有的子弹并新建一群外星人
             self.bullets.empty()
             self._create_fleet()
-        
+            self.settings.increase_speed()  #提升游戏难度
 
     def _update_aliens(self):
         """
@@ -204,6 +249,8 @@ class AlenInvasion:
         else:
             #飞船个数用完后标志置为 False
             self.stats.game_active = False
+            #显示鼠标光标
+            pygame.mouse.set_visible(True)
 
     def _check_aliens_bottom(self):
         """检测是否有外星人到达了屏幕低端"""
@@ -214,7 +261,7 @@ class AlenInvasion:
                 self._ship_hit()
                 break
 
-    def _undate_screen(self):
+    def _update_screen(self):
         """更新屏幕上的图像，并切换到更新屏幕"""
         # 每次循环时重绘屏幕
         self.screen.fill(self.settings.bg_color)
@@ -225,6 +272,12 @@ class AlenInvasion:
             bullet.draw_bullet()
         #在窗口显示外星人
         self.aliens.draw(self.screen)
+
+        #显示得分
+        self.sb.show_score()
+
+        if not self.stats.game_active:
+            self.play_button.draw_button()
 
         #让最近绘制的屏幕可见
         pygame.display.flip()
