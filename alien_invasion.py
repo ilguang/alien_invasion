@@ -165,6 +165,8 @@ class AlenInvasion:
             self.stats.reset_stats()
             self.stats.game_active = True
             self.sb.prep_score()    #重置得分
+            self.sb.prep_level()
+            self.sb.prep_ships()
 
             #清空余下的外星人和子弹
             self.aliens.empty()
@@ -206,7 +208,8 @@ class AlenInvasion:
         if collisions:
             for aliens in collisions.values():
                 self.stats.score += self.settings.alien_points * len(aliens)
-        self.sb.prep_score()
+            self.sb.prep_score()
+            self.sb._check_high_score()
 
         #判断外星人是否全部消灭
         if not self.aliens:
@@ -214,6 +217,10 @@ class AlenInvasion:
             self.bullets.empty()
             self._create_fleet()
             self.settings.increase_speed()  #提升游戏难度
+
+            #等级提高
+            self.stats.level += 1
+            self.sb.prep_level()
 
     def _update_aliens(self):
         """
@@ -233,8 +240,9 @@ class AlenInvasion:
     def _ship_hit(self):
         """响应飞船被外星人撞到"""
         if self.stats.ships_left > 0:    
-            #将 ship_left 减 1
+            #将 ship_left 减 1，并更新记分牌
             self.stats.ships_left -= 1
+            self.sb.prep_ships()
 
             #清空余下的外星人和子弹
             self.aliens.empty()
